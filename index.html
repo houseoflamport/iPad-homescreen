@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Kitchen Screen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --citron:        #2A2205;
+      --citron-dim:    #1a1502;
+      --citron-glow:   rgba(0, 0, 0, 0.12);
+      --citron-border: rgba(42, 34, 5, 0.2);
+      --bg:            #C8A94A;
+      --surface:       rgba(0,0,0,0.18);
+      --surface-2:     rgba(0,0,0,0.25);
+      --text:          #2A2205;
+      --text-muted:    rgba(42, 34, 5, 0.55);
+      --serif:         'DM Serif Display', Georgia, serif;
+      --sans:          'DM Sans', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    /* ── Subtle grain texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── LAUNCHER SCREEN ── */
+    #launcher {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+      z-index: 10;
+      padding: 32px 28px 28px;
+    }
+
+    /* Clock & date */
+    .clock-block {
+      text-align: center;
+      margin-bottom: 36px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .clock {
+      font-family: var(--serif);
+      font-size: clamp(52px, 12vw, 80px);
+      color: var(--citron);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .date {
+      font-size: clamp(13px, 2.5vw, 16px);
+      font-weight: 300;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    /* Divider */
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: var(--citron-border);
+      margin: 0 auto 32px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    /* Button grid */
+    .btn-group-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .btn-grid {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .btn-grid.calendar-grid {
+      grid-template-columns: repeat(3, 1fr);
+      animation: fadeUp 0.6s 0.2s ease both;
+      opacity: 0;
+      animation-fill-mode: forwards;
+    }
+
+    .btn-grid.action-grid {
+      grid-template-columns: repeat(3, 1fr);
+      animation: fadeUp 0.6s 0.35s ease both;
+      opacity: 0;
+      animation-fill-mode: forwards;
+      margin-top: 10px;
+    }
+
+    .group-row {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* Individual buttons */
+    .btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 12px 18px;
+      background: var(--surface);
+      border: 1px solid var(--citron-border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      user-select: none;
+      min-height: 88px;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--citron-glow);
+      opacity: 0;
+      transition: opacity 0.15s;
+      border-radius: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+    .btn:active::before { opacity: 1; }
+
+    .btn-icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .btn-label {
+      font-size: clamp(11px, 2.2vw, 13px);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    /* Calendar buttons — slightly warmer */
+    .btn.cal {
+      border-color: rgba(237, 206, 130, 0.3);
+    }
+    .btn.cal .btn-label { color: var(--citron); }
+
+    /* Action buttons */
+    .btn.action .btn-label { color: var(--text-muted); }
+
+    /* ── CALENDAR VIEW ── */
+    #cal-view {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      z-index: 20;
+      display: none;
+      flex-direction: column;
+      animation: fadeIn 0.25s ease;
+    }
+
+    #cal-view.active { display: flex; }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--citron-border);
+    }
+
+    .cal-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      color: var(--citron);
+    }
+
+    .cal-back {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border: 1px solid var(--citron-border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .cal-back:active { color: var(--citron); border-color: var(--citron); }
+
+    .cal-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .cal-body .placeholder-icon { font-size: 40px; opacity: 0.4; }
+
+    .cal-placeholder-label {
+      font-family: var(--serif);
+      font-size: 20px;
+      color: var(--citron);
+      opacity: 0.5;
+    }
+
+    .cal-placeholder-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* Countdown bar */
+    .countdown-bar {
+      height: 2px;
+      background: var(--surface-2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .countdown-fill {
+      height: 100%;
+      background: var(--citron);
+      width: 100%;
+      transform-origin: left;
+      transition: none;
+    }
+
+    /* ── ANIMATIONS ── */
+
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes shrink {
+      from { transform: scaleX(1); }
+      to   { transform: scaleX(0); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── LAUNCHER ── -->
+  <div id="launcher">
+
+    <div class="clock-block">
+      <div class="clock" id="clock">00:00</div>
+      <div class="date" id="date-display">Loading...</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group-row">
+      <div class="btn-group-label">Calendar</div>
+      <div class="btn-grid calendar-grid">
+        <button class="btn cal" onclick="openCalView('Day')">
+          <span class="btn-icon">📅</span>
+          <span class="btn-label">Day</span>
+        </button>
+        <button class="btn cal" onclick="openCalView('Week')">
+          <span class="btn-icon">🗓</span>
+          <span class="btn-label">Week</span>
+        </button>
+        <button class="btn cal" onclick="openCalView('Month')">
+          <span class="btn-icon">📆</span>
+          <span class="btn-label">Month</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="group-row" style="margin-top:10px;">
+      <div class="btn-group-label">Quick Launch</div>
+      <div class="btn-grid action-grid">
+        <button class="btn action" onclick="openURL('https://www.bbc.co.uk/food')">
+          <span class="btn-icon">🍳</span>
+          <span class="btn-label">Recipes</span>
+        </button>
+        <button class="btn action" onclick="openURL('https://www.bbc.co.uk/iplayer')">
+          <span class="btn-icon">📺</span>
+          <span class="btn-label">iPlayer</span>
+        </button>
+        <button class="btn action" onclick="goDesktop()">
+          <span class="btn-icon">⊞</span>
+          <span class="btn-label">Desktop</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CALENDAR VIEW ── -->
+  <div id="cal-view">
+    <div class="countdown-bar">
+      <div class="countdown-fill" id="countdown-fill"></div>
+    </div>
+    <div class="cal-header">
+      <div class="cal-title" id="cal-title">Day</div>
+      <div class="cal-back" onclick="closeCalView()">← Back</div>
+    </div>
+    <div class="cal-body">
+      <div class="placeholder-icon">📅</div>
+      <div class="cal-placeholder-label" id="cal-placeholder-label">Day View</div>
+      <div class="cal-placeholder-sub">Google Calendar connects in Story 3</div>
+    </div>
+  </div>
+
+  <script>
+    // ── Clock ──
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${h}:${m}`;
+
+      const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      const d = now.getDate();
+      const suffix = d === 1 || d === 21 || d === 31 ? 'st'
+                   : d === 2 || d === 22 ? 'nd'
+                   : d === 3 || d === 23 ? 'rd' : 'th';
+      document.getElementById('date-display').textContent =
+        `${days[now.getDay()]}  ·  ${d}${suffix} ${months[now.getMonth()]}`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // ── Calendar view ──
+    const CAL_DURATION = 60000; // 1 minute
+    let calTimer = null;
+
+    function openCalView(label) {
+      const view  = document.getElementById('cal-view');
+      const title = document.getElementById('cal-title');
+      const plh   = document.getElementById('cal-placeholder-label');
+      const fill  = document.getElementById('countdown-fill');
+
+      title.textContent = label + ' View';
+      plh.textContent   = label + ' View';
+      view.classList.add('active');
+
+      // Countdown bar
+      fill.style.transition = 'none';
+      fill.style.transform  = 'scaleX(1)';
+      // Force reflow then start animation
+      fill.getBoundingClientRect();
+      fill.style.transition = `transform ${CAL_DURATION}ms linear`;
+      fill.style.transform  = 'scaleX(0)';
+
+      // Auto-return after 1 minute
+      clearTimeout(calTimer);
+      calTimer = setTimeout(closeCalView, CAL_DURATION);
+    }
+
+    function closeCalView() {
+      clearTimeout(calTimer);
+      const view = document.getElementById('cal-view');
+      view.classList.remove('active');
+    }
+
+    // ── External links ──
+    function openURL(url) {
+      window.open(url, '_blank');
+    }
+
+    // ── Desktop ──
+    function goDesktop() {
+      // On iPad as a home screen web app, this navigates away cleanly.
+      // On re-open, the app restarts from scratch (launcher shown).
+      window.location.href = 'about:blank';
+    }
+  </script>
+
+</body>
+</html>
