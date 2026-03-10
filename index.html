@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── Design tokens ── */
     :root {
       --citron:        #2A2205;
       --citron-dim:    #1a1502;
@@ -35,7 +34,6 @@
       touch-action: manipulation;
     }
 
-    /* ── Subtle grain texture overlay ── */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -44,7 +42,6 @@
       opacity: 0.6;
     }
 
-    /* ── LAUNCHER SCREEN ── */
     #launcher {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
@@ -54,7 +51,6 @@
       padding: 32px 28px 28px;
     }
 
-    /* Clock & date */
     .clock-block {
       text-align: center;
       margin-bottom: 36px;
@@ -78,7 +74,6 @@
       margin-top: 6px;
     }
 
-    /* Divider */
     .divider {
       width: 48px;
       height: 1px;
@@ -87,7 +82,6 @@
       animation: fadeUp 0.6s 0.1s ease both;
     }
 
-    /* Button grid */
     .btn-group-label {
       font-size: 10px;
       font-weight: 500;
@@ -125,7 +119,6 @@
       max-width: 460px;
     }
 
-    /* Individual buttons */
     .btn {
       position: relative;
       display: flex;
@@ -156,10 +149,7 @@
     .btn:active { transform: scale(0.96); }
     .btn:active::before { opacity: 1; }
 
-    .btn-icon {
-      font-size: 26px;
-      line-height: 1;
-    }
+    .btn-icon { font-size: 26px; line-height: 1; }
 
     .btn-label {
       font-size: clamp(11px, 2.2vw, 13px);
@@ -169,13 +159,8 @@
       color: var(--text);
     }
 
-    /* Calendar buttons — slightly warmer */
-    .btn.cal {
-      border-color: rgba(237, 206, 130, 0.3);
-    }
+    .btn.cal { border-color: rgba(237, 206, 130, 0.3); }
     .btn.cal .btn-label { color: var(--citron); }
-
-    /* Action buttons */
     .btn.action .btn-label { color: var(--text-muted); }
 
     /* ── CALENDAR VIEW ── */
@@ -190,17 +175,33 @@
 
     #cal-view.active { display: flex; }
 
+    .countdown-bar {
+      height: 3px;
+      background: var(--surface-2);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .countdown-fill {
+      height: 100%;
+      background: var(--citron);
+      width: 100%;
+      transform-origin: left;
+      transition: none;
+    }
+
     .cal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 24px 16px;
+      padding: 12px 20px 10px;
       border-bottom: 1px solid var(--citron-border);
+      flex-shrink: 0;
     }
 
     .cal-title {
       font-family: var(--serif);
-      font-size: 22px;
+      font-size: 20px;
       color: var(--citron);
     }
 
@@ -219,52 +220,13 @@
 
     .cal-back:active { color: var(--citron); border-color: var(--citron); }
 
-    .cal-body {
+    #cal-iframe {
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 12px;
-      padding: 24px;
-      color: var(--text-muted);
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .cal-body .placeholder-icon { font-size: 40px; opacity: 0.4; }
-
-    .cal-placeholder-label {
-      font-family: var(--serif);
-      font-size: 20px;
-      color: var(--citron);
-      opacity: 0.5;
-    }
-
-    .cal-placeholder-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-    }
-
-    /* Countdown bar */
-    .countdown-bar {
-      height: 2px;
-      background: var(--surface-2);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .countdown-fill {
-      height: 100%;
-      background: var(--citron);
       width: 100%;
-      transform-origin: left;
-      transition: none;
+      border: none;
+      display: block;
+      background: white;
     }
-
-    /* ── ANIMATIONS ── */
-
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(14px); }
@@ -274,11 +236,6 @@
     @keyframes fadeIn {
       from { opacity: 0; }
       to   { opacity: 1; }
-    }
-
-    @keyframes shrink {
-      from { transform: scaleX(1); }
-      to   { transform: scaleX(0); }
     }
 
   </style>
@@ -298,15 +255,15 @@
     <div class="group-row">
       <div class="btn-group-label">Calendar</div>
       <div class="btn-grid calendar-grid">
-        <button class="btn cal" onclick="openCalView('Day')">
+        <button class="btn cal" onclick="openCalView('Day', 'AGENDA')">
           <span class="btn-icon">📅</span>
           <span class="btn-label">Day</span>
         </button>
-        <button class="btn cal" onclick="openCalView('Week')">
+        <button class="btn cal" onclick="openCalView('Week', 'WEEK')">
           <span class="btn-icon">🗓</span>
           <span class="btn-label">Week</span>
         </button>
-        <button class="btn cal" onclick="openCalView('Month')">
+        <button class="btn cal" onclick="openCalView('Month', 'MONTH')">
           <span class="btn-icon">📆</span>
           <span class="btn-label">Month</span>
         </button>
@@ -339,17 +296,15 @@
       <div class="countdown-fill" id="countdown-fill"></div>
     </div>
     <div class="cal-header">
-      <div class="cal-title" id="cal-title">Day</div>
+      <div class="cal-title" id="cal-title">Day View</div>
       <div class="cal-back" onclick="closeCalView()">← Back</div>
     </div>
-    <div class="cal-body">
-      <div class="placeholder-icon">📅</div>
-      <div class="cal-placeholder-label" id="cal-placeholder-label">Day View</div>
-      <div class="cal-placeholder-sub">Google Calendar connects in Story 3</div>
-    </div>
+    <iframe id="cal-iframe" src="" allowfullscreen></iframe>
   </div>
 
   <script>
+    const CALENDAR_SRC = encodeURIComponent('p38ssn8v0juf6ilbq7cp6k264g@group.calendar.google.com');
+
     // ── Clock ──
     function updateClock() {
       const now = new Date();
@@ -375,44 +330,41 @@
     const CAL_DURATION = 60000; // 1 minute
     let calTimer = null;
 
-    function openCalView(label) {
-      const view  = document.getElementById('cal-view');
-      const title = document.getElementById('cal-title');
-      const plh   = document.getElementById('cal-placeholder-label');
-      const fill  = document.getElementById('countdown-fill');
+    function openCalView(label, mode) {
+      const view   = document.getElementById('cal-view');
+      const title  = document.getElementById('cal-title');
+      const fill   = document.getElementById('countdown-fill');
+      const iframe = document.getElementById('cal-iframe');
 
       title.textContent = label + ' View';
-      plh.textContent   = label + ' View';
+
+      // Google Calendar embed URL — stripped back, English (GB), no extra chrome
+      iframe.src = `https://calendar.google.com/calendar/embed?src=${CALENDAR_SRC}&mode=${mode}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&hl=en_GB`;
+
       view.classList.add('active');
 
       // Countdown bar
       fill.style.transition = 'none';
       fill.style.transform  = 'scaleX(1)';
-      // Force reflow then start animation
       fill.getBoundingClientRect();
       fill.style.transition = `transform ${CAL_DURATION}ms linear`;
       fill.style.transform  = 'scaleX(0)';
 
-      // Auto-return after 1 minute
       clearTimeout(calTimer);
       calTimer = setTimeout(closeCalView, CAL_DURATION);
     }
 
     function closeCalView() {
       clearTimeout(calTimer);
-      const view = document.getElementById('cal-view');
-      view.classList.remove('active');
+      document.getElementById('cal-view').classList.remove('active');
+      document.getElementById('cal-iframe').src = ''; // stop background fetching
     }
 
-    // ── External links ──
     function openURL(url) {
       window.open(url, '_blank');
     }
 
-    // ── Desktop ──
     function goDesktop() {
-      // On iPad as a home screen web app, this navigates away cleanly.
-      // On re-open, the app restarts from scratch (launcher shown).
       window.location.href = 'about:blank';
     }
   </script>
