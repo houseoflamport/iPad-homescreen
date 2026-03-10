@@ -46,9 +46,9 @@
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 0;
       z-index: 10;
       padding: 32px 28px 28px;
+      gap: 0;
     }
 
     .clock-block {
@@ -92,49 +92,58 @@
       text-align: center;
     }
 
-    .btn-grid {
-      display: grid;
-      gap: 10px;
+    .group-row {
       width: 100%;
       max-width: 460px;
     }
 
-    .btn-grid.calendar-grid {
+    /* Calendar — 3 equal columns */
+    .calendar-grid {
+      display: grid;
       grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
       animation: fadeUp 0.6s 0.2s ease both;
       opacity: 0;
       animation-fill-mode: forwards;
     }
 
-    .btn-grid.action-grid {
-      grid-template-columns: repeat(3, 1fr);
+    /* Quick launch — 2 stacked full-width buttons */
+    .action-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       animation: fadeUp 0.6s 0.35s ease both;
       opacity: 0;
       animation-fill-mode: forwards;
       margin-top: 10px;
     }
 
-    .group-row {
-      width: 100%;
-      max-width: 460px;
-    }
-
     .btn {
       position: relative;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 20px 12px 18px;
+      gap: 12px;
+      padding: 18px 20px;
       background: var(--surface);
       border: 1px solid var(--citron-border);
       border-radius: 12px;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, transform 0.1s;
       user-select: none;
-      min-height: 88px;
+      min-height: 64px;
       overflow: hidden;
+      width: 100%;
+    }
+
+    /* Calendar buttons keep vertical layout */
+    .btn.cal {
+      flex-direction: column;
+      gap: 8px;
+      padding: 20px 12px 18px;
+      min-height: 88px;
+      border-color: rgba(237, 206, 130, 0.3);
     }
 
     .btn::before {
@@ -146,10 +155,10 @@
       border-radius: inherit;
     }
 
-    .btn:active { transform: scale(0.96); }
+    .btn:active { transform: scale(0.97); }
     .btn:active::before { opacity: 1; }
 
-    .btn-icon { font-size: 26px; line-height: 1; }
+    .btn-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
 
     .btn-label {
       font-size: clamp(11px, 2.2vw, 13px);
@@ -159,9 +168,16 @@
       color: var(--text);
     }
 
-    .btn.cal { border-color: rgba(237, 206, 130, 0.3); }
     .btn.cal .btn-label { color: var(--citron); }
     .btn.action .btn-label { color: var(--text-muted); }
+
+    /* iPlayer logo inside button */
+    .iplayer-logo {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
 
     /* ── CALENDAR VIEW ── */
     #cal-view {
@@ -237,7 +253,6 @@
       from { opacity: 0; }
       to   { opacity: 1; }
     }
-
   </style>
 </head>
 <body>
@@ -254,36 +269,35 @@
 
     <div class="group-row">
       <div class="btn-group-label">Calendar</div>
-      <div class="btn-grid calendar-grid">
+      <div class="calendar-grid">
         <button class="btn cal" onclick="openCalView('Day', 'AGENDA')">
           <span class="btn-icon">📅</span>
           <span class="btn-label">Day</span>
         </button>
         <button class="btn cal" onclick="openCalView('Week', 'WEEK')">
-          <span class="btn-icon">🗓</span>
+          <span class="btn-icon">📅</span>
           <span class="btn-label">Week</span>
         </button>
         <button class="btn cal" onclick="openCalView('Month', 'MONTH')">
-          <span class="btn-icon">📆</span>
+          <span class="btn-icon">📅</span>
           <span class="btn-label">Month</span>
         </button>
       </div>
     </div>
 
-    <div class="group-row" style="margin-top:10px;">
-      <div class="btn-group-label">Quick Launch</div>
-      <div class="btn-grid action-grid">
+    <div class="group-row">
+      <div class="btn-group-label" style="margin-top:18px;">Quick Launch</div>
+      <div class="action-stack">
         <button class="btn action" onclick="openURL('https://www.bbc.co.uk/food')">
           <span class="btn-icon">🍳</span>
           <span class="btn-label">Recipes</span>
         </button>
-        <button class="btn action" onclick="openURL('https://www.bbc.co.uk/iplayer')">
-          <span class="btn-icon">📺</span>
-          <span class="btn-label">iPlayer</span>
-        </button>
-        <button class="btn action" onclick="goDesktop()">
-          <span class="btn-icon">⊞</span>
-          <span class="btn-label">Desktop</span>
+        <button class="btn action" onclick="openURL('bbciplayer://')">
+          <img class="iplayer-logo"
+               src="https://static.files.bbci.co.uk/core/website/assets/static/iplayer/4.6.2/img/iPlayerLogo.png"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+               alt="BBC iPlayer">
+          <span class="btn-label" style="display:none;">iPlayer</span>
         </button>
       </div>
     </div>
@@ -327,7 +341,7 @@
     setInterval(updateClock, 10000);
 
     // ── Calendar view ──
-    const CAL_DURATION = 60000; // 1 minute
+    const CAL_DURATION = 60000;
     let calTimer = null;
 
     function openCalView(label, mode) {
@@ -337,13 +351,9 @@
       const iframe = document.getElementById('cal-iframe');
 
       title.textContent = label + ' View';
-
-      // Google Calendar embed URL — stripped back, English (GB), no extra chrome
       iframe.src = `https://calendar.google.com/calendar/embed?src=${CALENDAR_SRC}&mode=${mode}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&hl=en_GB`;
-
       view.classList.add('active');
 
-      // Countdown bar
       fill.style.transition = 'none';
       fill.style.transform  = 'scaleX(1)';
       fill.getBoundingClientRect();
@@ -357,15 +367,11 @@
     function closeCalView() {
       clearTimeout(calTimer);
       document.getElementById('cal-view').classList.remove('active');
-      document.getElementById('cal-iframe').src = ''; // stop background fetching
+      document.getElementById('cal-iframe').src = '';
     }
 
     function openURL(url) {
-      window.open(url, '_blank');
-    }
-
-    function goDesktop() {
-      window.location.href = 'about:blank';
+      window.location.href = url;
     }
   </script>
 
